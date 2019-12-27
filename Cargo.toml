@@ -1,0 +1,13 @@
+[package]
+name = "exam_matcher"
+version = "0.1.0"
+authors = ["Nils ANDRÉ-CHANG <nils@nilsand.re>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+structopt = "0.3"
+leptess = { git = "https://github.com/NilsIrl/leptess.git", branch = "nils" }
+regex = "1"
+lazy_static = "1"
