@@ -5,6 +5,7 @@ stdenv.mkDerivation {
   buildInputs = [
     tesseract4
     leptonica
+    poppler_utils
     clang
   ];
 }
