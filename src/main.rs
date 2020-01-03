@@ -18,21 +18,18 @@ fn question_type(text: &str) -> TextType {
         static ref RE: regex::Regex = regex::Regex::new(r"^\(?(\S{1,4})\s?(\)|\.|\-).*").unwrap(); // There is a capture group around [[:alnum:]] to be used to identity the question vs answer
     };
     match RE.captures(text.trim()) {
-        Some(captures) => {
-            if captures
-                .get(1)
-                .unwrap()
-                .as_str()
-                .chars()
-                .next()
-                .unwrap()
-                .is_alphabetic()
-            {
-                TextType::Alphabetic
-            } else {
-                TextType::Numeric
+        Some(captures) => match captures.get(1).unwrap().as_str().chars().next() {
+            Some(first_character) => {
+                if first_character.is_numeric() {
+                    TextType::Numeric
+                } else if first_character.is_alphabetic() {
+                    TextType::Alphabetic
+                } else {
+                    TextType::Undefined
+                }
             }
-        }
+            None => unreachable!(),
+        },
         None => TextType::Undefined,
     }
 }
@@ -178,83 +175,30 @@ mod tests {
 
     #[test]
     fn detect_question() {
-        assert!(
-            if let TextType::Numeric = question_type("   1. Something") {
-                true
-            } else {
-                false
-            }
-        );
-        assert!(if let TextType::Numeric = question_type(" 1) Something") {
-            true
-        } else {
-            false
-        });
-        assert!(if let TextType::Numeric = question_type("(1) Something") {
-            true
-        } else {
-            false
-        });
-        assert!(
-            if let TextType::Numeric = question_type("1. Indicar cuál tipo de autómata") {
-                true
-            } else {
-                false
-            }
-        );
-        assert!(
-            if let TextType::Alphabetic = question_type("(a) Un autómata finito") {
-                true
-            } else {
-                false
-            }
-        );
-        assert!(if let TextType::Undefined = question_type("hello") {
-            true
-        } else {
-            false
-        });
-        assert!(
-            if let TextType::Undefined = question_type("Cada acierto un punto sobre") {
-                true
-            } else {
-                false
-            }
-        );
-        assert!(
-            if let TextType::Undefined = question_type("Cada acierto un punto sobre 10") {
-                true
-            } else {
-                false
-            }
-        );
+        assert!(TextType::Numeric == question_type("   1. Something"));
+        assert!(TextType::Numeric == question_type(" 1) Something"));
+        assert!(TextType::Numeric == question_type("(1) Something"));
+        assert!(TextType::Numeric == question_type("1. Indicar cuál tipo de autómata"));
+        assert!(TextType::Alphabetic == question_type("(a) Un autómata finito"));
+        assert!(TextType::Undefined == question_type("hello"));
+        assert!(TextType::Undefined == question_type("Cada acierto un punto sobre"));
+        assert!(TextType::Undefined == question_type("Cada acierto un punto sobre 10"));
     }
 
     #[test]
     fn other_detect_question() {
-        assert!(
-            if let TextType::Undefined = question_type("descuenta 1/2.") {
-                true
-            } else {
-                false
-            }
-        );
-        assert!(if let TextType::Undefined = question_type("puntuan.") {
-            true
-        } else {
-            false
-        });
-        assert!(
-            if let TextType::Undefined = question_type("vacía. En el diagram") {
-                true
-            } else {
-                false
-            }
-        );
+        assert!(TextType::Undefined == question_type("descuenta 1/2."));
+        assert!(TextType::Undefined == question_type("puntuan."));
+        assert!(TextType::Undefined == question_type("vacía. En el diagram"));
     }
 
     #[test]
     fn detect_dash() {
-        assert!(question_type("1 - alsdkfj alsdkfj") != TextType::Undefined);
+        assert!(question_type("1 - alsdkfj alsdkfj") == TextType::Numeric);
+    }
+
+    #[test]
+    fn utf8_characters() {
+        assert!(TextType::Undefined == question_type("(¢) ala+ba)\" — aa®(ba)”"));
     }
 }
